@@ -1,39 +1,67 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
+import {ThemeProvider} from "styled-components";
+import {Ionicons} from "@expo/vector-icons";
+import CommunityScreen from "@/app/community";
+import ChatScreen from "@/app/chat";
+import SafetyScreen from "@/app/safety";
+import ProfileScreen from "@/app/profile";
+import {ThemeProviderCustom, useThemeMode} from "@/utils/ThemeContext";
+import {darkTheme} from "@/themes/dark";
+import {lightTheme} from "@/themes/light";
+import StoreScreen from "@/app/store";
+import ChatStack from "@/app/chatStack";
 
-import { useColorScheme } from '@/hooks/useColorScheme';
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+const Tab = createBottomTabNavigator();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
+  const { mode } = useThemeMode();
+  const isDark = mode;
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <ThemeProviderCustom>
+      <ThemeProvider theme={mode === 'dark' ? darkTheme : lightTheme}>
+        <Tab.Navigator
+          screenOptions={({ route }) => ({
+            headerShown: false,
+            tabBarActiveTintColor: '#1A9FFF',
+            tabBarInactiveTintColor: isDark ? '#aaa' : '#555',
+            tabBarStyle: {
+              backgroundColor: isDark ? '#2A2A2A' : '#FFFFFF',
+              borderTopColor: isDark ? '#444' : '#ccc',
+            },
+            tabBarIcon: ({ color, size }) => {
+              let iconName: keyof typeof Ionicons.glyphMap;
+
+              switch (route.name) {
+                case 'Home':
+                  iconName = 'home';
+                  break;
+                case 'Community':
+                  iconName = 'chatbubble-ellipses';
+                  break;
+                default:
+                  iconName = 'ellipse';
+              }
+
+              return <Ionicons name={iconName} size={size} color={color} />;
+            },
+          })}
+        >
+          <Tab.Screen name="Store" component={StoreScreen} />
+          <Tab.Screen name="Community" component={CommunityScreen} />
+          <Tab.Screen
+            name="Chat"
+            component={ChatStack}
+            options={{
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="chatbubbles" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tab.Screen name="Safety" component={SafetyScreen} />
+          <Tab.Screen name="UserProfile" component={ProfileScreen} />
+        </Tab.Navigator>
+      </ThemeProvider>
+    </ThemeProviderCustom>
   );
 }

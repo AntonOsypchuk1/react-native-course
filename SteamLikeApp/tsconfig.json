@@ -6,9 +6,11 @@
       "@/*": [
         "./*"
       ]
-    }
+    },
+    "types": ["styled-components"]
   },
   "include": [
+    "themes",
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
