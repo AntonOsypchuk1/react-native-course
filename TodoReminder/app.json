@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "TodoReminder",
+    "slug": "TodoReminder",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "extra": {
+      "oneSignalAppId": "3e146f08-b9bd-4063-878c-bd16bd390e25",
+      "oneSignalApiKey": "os_v2_app_hykg6cfzxvaghb4mxull2oioex54jn75fa4evimpzljmsmdfueubsbhvjs4zkywirvdi3ffgkwgxdc2ikrzlt4jopqaxti4qmwjn6pa"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-firebase-core",
+        {
+          "googleServicesFile": "./google-services.json",
+          "plistFile": "./GoogleService-Info.plist"
+        }
+      ],
+      [
+        "onesignal-expo-plugin",
+        {
+          "mode": "development",
+          "appId": "3e146f08-b9bd-4063-878c-bd16bd390e25"
+        }
+      ],
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
