@@ -1,7 +1,14 @@
 import React from 'react';
 import {FlatList, Image, StyleSheet, Text, View} from 'react-native';
 
-const dummyNews = Array.from({length: 8}, (_, i) => ({
+type NewsItem = {
+  id: string;
+  title: string;
+  date: string;
+  snippet: string;
+};
+
+const dummyNews: NewsItem[] = Array.from({length: 8}, (_, i) => ({
   id: String(i),
   title: 'Заголовок новини',
   date: 'Дата новини',
@@ -9,7 +16,7 @@ const dummyNews = Array.from({length: 8}, (_, i) => ({
 }));
 
 export default function HomeScreen() {
-  const renderItem = ({item}) => (
+  const renderItem = ({item}: {item: NewsItem}) => (
     <View style={styles.item}>
       <Image
         //         source={require('../assets/news-placeholder.png')}

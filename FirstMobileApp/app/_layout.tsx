@@ -1,11 +1,11 @@
 import GalleryScreen from "@/app/gallery";
 import ProfileScreen from "@/app/profile";
 import HomeScreen from "@/app/index";
-import {createMaterialTopTabNavigator} from "@react-navigation/material-top-tabs";
 import {StyleSheet} from "react-native";
 import React from "react";
 import {AntDesign, FontAwesome5, MaterialCommunityIcons} from "@expo/vector-icons";
 import TopNav from "@/components/TopNav";
+import {createMaterialTopTabNavigator} from "@react-navigation/material-top-tabs";
 
 const Tab = createMaterialTopTabNavigator();
 
