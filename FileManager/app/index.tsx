@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {RootStackParamList} from '@/types/RootStackParamList';
-import {createFile, createFolder, deleteItem, getInfo, readDir} from "@/utils/fsHelper";
+import {router} from 'expo-router';
+import {APP_ROOT_DIR, createFile, createFolder, deleteItem, readDir} from "@/utils/fsHelper";
 import NewItemModal from "@/components/NewItemModal";
+import {Directory} from "expo-file-system";
 
 interface FileSystemItem {
   name: string;
@@ -13,17 +13,14 @@ interface FileSystemItem {
   modificationTime?: number;
 }
 
-type ExplorerProps = NativeStackScreenProps<RootStackParamList, 'Explorer'>;
-
-const ExplorerScreen: React.FC<ExplorerProps> = ({navigation, route}) => {
-  const {rootDir} = route.params;
-  const [currentPath, setCurrentPath] = useState<string>(rootDir);
+const ExplorerScreen: React.FC = () => {
+  const [currentPath, setCurrentPath] = useState<string>(APP_ROOT_DIR);
   const [items, setItems] = useState<FileSystemItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
   const goUp = () => {
-    if (currentPath === rootDir) return;
+    if (currentPath === APP_ROOT_DIR) return;
     const parent = currentPath
       .replace(/\/$/, '')
       .split('/')
@@ -37,26 +34,27 @@ const ExplorerScreen: React.FC<ExplorerProps> = ({navigation, route}) => {
   };
 
   const loadDirectory = async (path: string) => {
+    console.log('Loading directory:', path);
+
     setLoading(true);
     try {
-      const names = await readDir(path);
-      const entries = await Promise.all(
-        names.map(async (name) => {
-          const uri = path + name + (name.includes('.') ? '' : '/');
-          const info = await getInfo(uri);
-          return {
-            name,
-            uri,
-            isDirectory: info.isDirectory,
-            size: info.size,
-            modificationTime: info.modificationTime,
-          };
-        })
-      );
+      const entriesRaw = await readDir(path);
+
+      const entries = entriesRaw.map((entry) => {
+        return {
+          name: entry.name,
+          uri: entry.uri,
+          isDirectory: entry instanceof Directory, // important
+          size: entry.size ?? 0,
+          // modificationTime: entry.modificationTime ?? 0,
+        };
+      });
+
       entries.sort((a, b) => {
         if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1;
         return a.name.localeCompare(b.name);
       });
+
       setItems(entries);
     } catch (error) {
       console.error(error);
@@ -82,7 +80,7 @@ const ExplorerScreen: React.FC<ExplorerProps> = ({navigation, route}) => {
           onPress: async () => {
             try {
               await deleteItem(item.uri);
-              loadDirectory(currentPath);
+              await loadDirectory(currentPath);
             } catch (e) {
               console.error(e);
               Alert.alert('Помилка', 'Не вдалося видалити файл/папку');
@@ -96,12 +94,12 @@ const ExplorerScreen: React.FC<ExplorerProps> = ({navigation, route}) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        {currentPath !== rootDir && (
+        {currentPath !== APP_ROOT_DIR && (
           <TouchableOpacity onPress={goUp} style={styles.backButtonContainer}>
             <Text style={styles.backButton}>←</Text>
           </TouchableOpacity>
         )}
-        <Text style={styles.pathText}>{currentPath.replace(rootDir, '') || '/'}</Text>
+        <Text style={styles.pathText}>{currentPath.replace(APP_ROOT_DIR, '') || '/'}</Text>
         <TouchableOpacity onPress={() => setModalVisible(true)}>
           <Text style={styles.addButton}>＋</Text>
         </TouchableOpacity>
@@ -118,7 +116,7 @@ const ExplorerScreen: React.FC<ExplorerProps> = ({navigation, route}) => {
               onPress={() =>
                 item.isDirectory
                   ? enterFolder(item.uri)
-                  : navigation.navigate('FileView', {uri: item.uri})
+                  : router.push({pathname: '/fileView', params: {uri: item.uri}})
               }
               onLongPress={() => handleDelete(item)}
             >
@@ -136,11 +134,11 @@ const ExplorerScreen: React.FC<ExplorerProps> = ({navigation, route}) => {
         onClose={() => setModalVisible(false)}
         onCreateFolder={async (name) => {
           await createFolder(currentPath, name);
-          loadDirectory(currentPath);
+          await loadDirectory(currentPath);
         }}
         onCreateFile={async (name, content) => {
           await createFile(currentPath, name, content);
-          loadDirectory(currentPath);
+          await loadDirectory(currentPath);
         }}
       />
     </View>

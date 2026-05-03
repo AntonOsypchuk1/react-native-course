@@ -21,6 +21,10 @@ const NewItemModal: React.FC<Props> = ({ visible, onClose, onCreateFolder, onCre
   const [name, setName] = useState<string>('');
   const [content, setContent] = useState<string>('');
 
+  if (!visible) {
+    return null;
+  }
+
   const handleCreate = async () => {
     if (!name.trim()) {
       Alert.alert('Помилка', 'Введіть назву.');

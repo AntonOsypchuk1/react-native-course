@@ -1,18 +1,22 @@
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Alert, Button, StyleSheet, Text, TextInput, View} from 'react-native';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {RootStackParamList} from '@/types/RootStackParamList';
+import {router, useLocalSearchParams} from 'expo-router';
 import {getInfo, readFile, writeFile} from "@/utils/fsHelper";
 
-type FileEditProps = NativeStackScreenProps<RootStackParamList, 'FileEdit'>;
-
-const FileEditScreen: React.FC<FileEditProps> = ({route, navigation}) => {
-  const {uri} = route.params;
+const FileEditScreen: React.FC = () => {
+  const {uri: rawUri} = useLocalSearchParams<{ uri?: string | string[] }>();
+  const uri = Array.isArray(rawUri) ? rawUri[0] : rawUri;
   const [text, setText] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [info, setInfo] = useState<any>(null);
 
   useEffect(() => {
+    if (!uri) {
+      Alert.alert('Помилка', 'URI файлу не передано');
+      setLoading(false);
+      return;
+    }
+
     (async () => {
       try {
         const [existing, fileInfo] = await Promise.all([readFile(uri), getInfo(uri)]);
@@ -28,9 +32,14 @@ const FileEditScreen: React.FC<FileEditProps> = ({route, navigation}) => {
   }, [uri]);
 
   const handleSave = async () => {
+    if (!uri) {
+      Alert.alert('Помилка', 'URI файлу не передано');
+      return;
+    }
+
     try {
       await writeFile(uri, text);
-      navigation.goBack();
+      router.back();
     } catch (e) {
       console.error(e);
       Alert.alert('Помилка', 'Не вдалося зберегти зміни');
@@ -55,7 +64,7 @@ const FileEditScreen: React.FC<FileEditProps> = ({route, navigation}) => {
         <>
           {info && (
             <View style={styles.infoContainer}>
-              <Text>Назва: {uri.split('/').pop()}</Text>
+              <Text>Назва: {(uri ?? '').split('/').pop()}</Text>
               <Text>Розмір: {formatBytes(info.size || 0)}</Text>
               <Text>Дата модифікації: {new Date((info.modificationTime || 0) * 1000).toLocaleString()}</Text>
             </View>
@@ -65,7 +74,6 @@ const FileEditScreen: React.FC<FileEditProps> = ({route, navigation}) => {
             multiline
             value={text}
             onChangeText={setText}
-            blurOnSubmit
           />
           <Button title="Зберегти" onPress={handleSave}/>
         </>

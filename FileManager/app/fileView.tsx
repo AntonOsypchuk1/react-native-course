@@ -1,18 +1,22 @@
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, View} from 'react-native';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {getInfo, readFile} from "@/utils/fsHelper";
-import {RootStackParamList} from "@/types/RootStackParamList";
+import {router, useLocalSearchParams} from 'expo-router';
+import {FSInfo, getInfo, readFile} from "@/utils/fsHelper";
 
-type FileViewProps = NativeStackScreenProps<RootStackParamList, 'FileView'>;
-
-const FileViewScreen: React.FC<FileViewProps> = ({route, navigation}) => {
-  const {uri} = route.params;
+const FileViewScreen: React.FC = () => {
+  const {uri: rawUri} = useLocalSearchParams<{ uri?: string | string[] }>();
+  const uri = Array.isArray(rawUri) ? rawUri[0] : rawUri;
   const [content, setContent] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
-  const [info, setInfo] = useState<any>(null);
+  const [info, setInfo] = useState<FSInfo | undefined>(undefined);
 
   useEffect(() => {
+    if (!uri) {
+      Alert.alert('Помилка', 'URI файлу не передано');
+      setLoading(false);
+      return;
+    }
+
     (async () => {
       try {
         const [text, fileInfo] = await Promise.all([readFile(uri), getInfo(uri)]);
@@ -45,7 +49,7 @@ const FileViewScreen: React.FC<FileViewProps> = ({route, navigation}) => {
         <>
           {info && (
             <View style={styles.infoContainer}>
-              <Text>Назва: {uri.split('/').pop()}</Text>
+              <Text>Назва: {(uri ?? '').split('/').pop()}</Text>
               <Text>Розмір: {formatBytes(info.size || 0)}</Text>
               <Text>Дата модифікації: {new Date((info.modificationTime || 0) * 1000).toLocaleString()}</Text>
             </View>
@@ -53,10 +57,10 @@ const FileViewScreen: React.FC<FileViewProps> = ({route, navigation}) => {
           <ScrollView style={styles.scroll}>
             <Text style={styles.text}>{content}</Text>
           </ScrollView>
-          <Button title="Редагувати" onPress={() => navigation.navigate('FileEdit', {uri})}/>
-        </>
-      )}
-    </View>
+           {uri && <Button title="Редагувати" onPress={() => router.push({pathname: '/fileEdit', params: {uri}})}/>}
+         </>
+       )}
+     </View>
   );
 };
 
